@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+
+<html>
+
+  <head>
+
+    <meta name = "viewport" content = "width=device-width">
+    <title>Jumping Block</title>
+
+    <style>
+      * {
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+      }
+
+    html, body {
+      height:100%;
+      width:100%;
+      }
+    body {
+      align-content:space-around;
+      background-color:#202830;
+      color:#ffffff;
+      display:grid;
+      justify-content:center;
+      }
+    canvas {
+      background-color:#ffffff;
+      }
+
+    #btn-left, #btn-right{
+      height:100%;
+      width: 48%;
+    }
+    #btn-pause, #btn-jump{
+      height:100%;
+      width: 99%;
+    }
+    .btn-div{
+      height: 50px;
+    }
+
+    </style>
+  </head>
+
+  <body>   
+
+<div>
+      
+  <canvas></canvas>
+
+  <div class="btn-div">
+    <button id="btn-jump">JUMP</button>
+  </div>
+
+  <div class="btn-div">
+    <button id="btn-left">LEFT</button>
+    <button id="btn-right">RIGHT</button>
+  </div>
+  <div class="btn-div">
+    <button id="btn-pause">PAUSE</button>
+  </div>
+
+
+</div>
+<script type = "text/javascript">
+      
+let ctx, controller, loop, gameControl;
+
+let leftBtn = document.querySelector("#btn-left");
+let rightBtn = document.querySelector("#btn-right");
+let pauseBtn = document.querySelector("#btn-pause");
+let jumpBtn = document.querySelector("#btn-jump");
+
+ctx = document.querySelector("canvas").getContext("2d");
+
+
+
+gameControl = {
+
+    gameRunning : true,//boolean to pause/stop the game
+    gamePause : function(){
+      this.gameRunning = false;
+    },
+    gameUnpause : function(){
+      this.gameRunning = true;
+      loop();
+    },
+};
+
+let gameDisplay = {
+
+    height : 400,
+    width : 600,
+    backgroundColor : "#202020",
+    paintBackground : function(){
+      ctx.fillStyle = this.backgroundColor;
+      ctx.fillRect(0, 0, this.width, this.height);// x, y, width, height
+    },
+    groundColor : "green",
+    groundHeight : 10,
+    paintGround : function(){
+      ctx.strokeStyle = this.groundColor;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(0, this.height-this.groundHeight);
+      ctx.lineTo(this.width, this.height-this.groundHeight);
+      ctx.stroke();
+
+    }
+
+};
+
+function Rectangle(){
+  this.color = "#ff0000"
+  this.height = 32,
+  this.jumping =true,
+  this.width = 32,
+  this.x = 144, // center of the canvas
+  this.x_velocity = 0,
+  this.y = 0,
+  this.y_velocity = 0
+  this.paintRectangle = function(){
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.rect(this.x, this.y, this.width, this.height);
+    ctx.fill();
+  };
+};
+
+let rectangle = new Rectangle();
+
+controller = {
+  left:false,
+  right:false,
+  up:false,
+  keyListener:function(event) {
+    var key_state = (event.type == "keydown")?true:false;
+    switch(event.keyCode) {
+      case 37:// left key
+        controller.left = key_state;
+      break;
+      case 38:// up key
+        controller.up = key_state;
+      break;
+      case 39:// right key
+        controller.right = key_state;
+      break;   
+    }
+  },
+  touchListener:function(touchEvt){
+    //if the touch type is touchstart set state to true
+    let touch_state = (touchEvt.type == "touchstart")?true:false;
+    //capture the element that the touch targets ie buttons
+    let touchTarget = touchEvt.target;
+
+    switch(touchEvt.target) {
+      case leftBtn:// left key
+        controller.left = touch_state;
+      break;
+      case jumpBtn:// up key
+        controller.up = touch_state;
+      break;
+      case rightBtn:// right key
+        controller.right = touch_state;
+    }
+  }
+};
+
+
+ctx.canvas.height = gameDisplay.height;
+ctx.canvas.width = gameDisplay.width;
+
+
+
+
+loop = function() {
+  //use gameControl.gameRunning to pause/stop the game
+  //requires loop() to be called to restart 
+  if(gameControl.gameRunning){
+
+  if (controller.up && rectangle.jumping == false) {
+    rectangle.y_velocity -= 0.1 * gameDisplay.height;
+    rectangle.jumping = true;
+  }
+  if (controller.left) {
+    rectangle.x_velocity -= 0.5;
+  }
+  if (controller.right) {
+    rectangle.x_velocity += 0.5;
+  }
+
+  rectangle.y_velocity += 1.5;// gravity
+  rectangle.x += rectangle.x_velocity;
+  rectangle.y += rectangle.y_velocity;
+  rectangle.x_velocity *= 0.9;// friction
+  rectangle.y_velocity *= 0.9;// friction
+
+  // if rectangle is falling below floor line
+  if (rectangle.y > gameDisplay.height - gameDisplay.groundHeight - rectangle.height) {
+
+    rectangle.jumping = false;
+    rectangle.y = gameDisplay.height - gameDisplay.groundHeight - rectangle.height;
+    rectangle.y_velocity = 0;
+
+  }
+
+  // if rectangle is going off the left of the screen
+  if (rectangle.x < -rectangle.width) {
+    rectangle.x = gameDisplay.width;
+  } else if (rectangle.x > gameDisplay.width) {// if rectangle goes past right boundary
+    rectangle.x = - rectangle.width;
+  }
+
+gameDisplay.paintBackground();
+
+gameDisplay.paintGround();
+
+rectangle.paintRectangle();
+
+
+  
+
+  // call update when the browser is ready to draw again
+  window.requestAnimationFrame(loop);
+}
+};
+
+window.addEventListener("keydown", controller.keyListener)
+window.addEventListener("keyup", controller.keyListener);
+
+
+window.requestAnimationFrame(loop);
+
+
+/***********************************
+//PAUSE FUNCTIONALITY NOT WORKING
+window.addEventListener("keydown",(e)=>{
+  if(e.keyCode == 32){
+    (gameControl.gameRunning)? gameControl.gameUnpause():gameControl.gamePause();
+  }
+});
+
+pauseBtn.addEventListener("keydown",()=>{
+  (gameControl.gameRunning)? gameControl.gameUnpause():gameControl.gamePause();
+},
+false);
+
+*****************************************/
+
+
+    </script>
+
+
+
+
+
+  </body>
+
+</html>

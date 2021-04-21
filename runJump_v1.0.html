@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+
+<html>
+
+  <head>
+
+    <meta name = "viewport" content = "width=device-width">
+    <title>Jumping Block</title>
+
+    <style>
+      * {
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+      }
+
+    html, body {
+      height:100%;
+      width:100%;
+      }
+    body {
+      align-content:space-around;
+      background-color:#202830;
+      color:#ffffff;
+      display:grid;
+      justify-content:center;
+      }
+    canvas {
+      background-color:#ffffff;
+      }
+
+    </style>
+  </head>
+
+  <body>   
+
+
+    
+    <canvas></canvas>
+
+<div>
+  <button id="btn-left">LEFT</button>
+  <button id="btn-right">RIGHT</button>
+</div>
+
+<script type = "text/javascript">
+      
+let ctx, controller, loop;
+
+ctx = document.querySelector("canvas").getContext("2d");
+
+ctx.canvas.height = 180;
+ctx.canvas.width = 320;
+
+let gameControl = {
+
+    gameRunning : true,//boolean to pause/stop the game
+    gamePause : function(){
+      this.gameRunning = false;
+    },
+    gameUnpause : function(){
+      this.gameRunning = true;
+      loop();
+    },
+};
+
+let gameDisplay = {
+
+    height : 180,
+    width : 320,
+    backgroundColor : "#202020",
+    groundColor : "#202830",
+    paintBackground : function(){
+      ctx.fillStyle = this.backgroundColor;
+      ctx.fillRect(0, 0, this.width, this.height);// x, y, width, height
+    },
+    paintGround : function(){
+      ctx.strokeStyle = this.groundColor;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(0, 164);
+      ctx.lineTo(320, 164);
+      ctx.stroke();
+
+    }
+
+};
+
+
+function Rectangle(){
+  this.color = "#ff0000"
+  this.height = 32,
+  this.jumping =true,
+  this.width = 32,
+  this.x = 144, // center of the canvas
+  this.x_velocity = 0,
+  this.y = 0,
+  this.y_velocity = 0
+
+
+  this.paintRectangle = function(){
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.rect(this.x, this.y, this.width, this.height);
+    ctx.fill();
+
+  };
+
+
+
+};
+
+let rectangle = new Rectangle();
+
+controller = {
+
+  left:false,
+  right:false,
+  up:false,
+  keyListener:function(event) {
+    var key_state = (event.type == "keydown")?true:false;
+
+    switch(event.keyCode) {
+      case 37:// left key
+        controller.left = key_state;
+      break;
+      case 38:// up key
+        controller.up = key_state;
+      break;
+      case 39:// right key
+        controller.right = key_state;
+      break;
+    }
+  }
+};
+
+
+
+loop = function() {
+  //use gameControl.gameRunning to pause/stop the game
+  //requires loop() to be called to restart 
+  if(gameControl.gameRunning){
+
+  if (controller.up && rectangle.jumping == false) {
+    rectangle.y_velocity -= 20;
+    rectangle.jumping = true;
+  }
+  if (controller.left) {
+    rectangle.x_velocity -= 0.5;
+  }
+  if (controller.right) {
+    rectangle.x_velocity += 0.5;
+  }
+
+  rectangle.y_velocity += 1.5;// gravity
+  rectangle.x += rectangle.x_velocity;
+  rectangle.y += rectangle.y_velocity;
+  rectangle.x_velocity *= 0.9;// friction
+  rectangle.y_velocity *= 0.9;// friction
+
+  // if rectangle is falling below floor line
+  if (rectangle.y > 180 - 16 - 32) {
+
+    rectangle.jumping = false;
+    rectangle.y = 180 - 16 - 32;
+    rectangle.y_velocity = 0;
+
+  }
+
+  // if rectangle is going off the left of the screen
+  if (rectangle.x < -32) {
+    rectangle.x = 320;
+  } else if (rectangle.x > 320) {// if rectangle goes past right boundary
+    rectangle.x = -32;
+  }
+
+gameDisplay.paintBackground();
+
+gameDisplay.paintGround();
+
+rectangle.paintRectangle();
+
+
+  
+
+  // call update when the browser is ready to draw again
+  window.requestAnimationFrame(loop);
+}
+};
+
+window.addEventListener("keydown", controller.keyListener)
+window.addEventListener("keyup", controller.keyListener);
+
+
+window.requestAnimationFrame(loop);
+
+    </script>
+
+
+
+
+
+  </body>
+
+</html>
